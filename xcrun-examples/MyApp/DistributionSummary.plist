@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>MyApp.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>777ECEF12A5632C83DD81169A06A66E379BE88D2</string>
+				<key>dateExpires</key>
+				<string>03/07/2026</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>F694X76A5X.com.appsbay.MyApp</string>
+				<key>com.apple.developer.team-identifier</key>
+				<string>F694X76A5X</string>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>MyApp.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>9cfaeed7-e910-4f52-b015-675b0b713ac7</string>
+				<key>dateExpires</key>
+				<string>03/07/2026</string>
+				<key>name</key>
+				<string>iOS Team Ad Hoc Provisioning Profile: com.appsbay.MyApp</string>
+			</dict>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>F694X76A5X</string>
+				<key>name</key>
+				<string>APPS BAY LIMITED</string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0</string>
+		</dict>
+	</array>
+</dict>
+</plist>
